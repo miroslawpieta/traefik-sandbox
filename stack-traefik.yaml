@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: "traefik:${TRAEFIK_IMAGE_TAG}"
+
+    deploy:
+      labels:
+        - "traefik.http.services.noop.loadbalancer.server.port=8080"                
+        - "traefik.http.routers.traefik-dashboard-router.service=api@internal"
+        - "traefik.http.routers.traefik-dashboard-router.entrypoints=websecure,web"
+        - "traefik.http.routers.traefik-dashboard-router.tls=true"
+        - "traefik.http.routers.traefik-dashboard-router.rule=Host(`traefik.${DOMAIN_HOSTNAME}`)"
+        # Optional - set basic auth for dashboard
+        # Generate user & password => echo $(htpasswd -nb admin admin) | sed -e s/\\$/\\$\\$/g
+        #- "traefik.http.routers.traefik-dashboard-router.middlewares=traefik-dashboard-auth"
+        #- "traefik.http.middlewares.traefik-dashboard-auth.basicauth.users=admin:$$apr1$$FYGSQzjj$$THQbbQ3q6Jm5mn7Ca7tez1"
+      mode: global
+      placement:
+        constraints: [node.role==manager]
+    environment:
+      - TZ=Europe/Warsaw
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    configs:
+      - source: traefik_dynamic_conf
+        target: /etc/traefik/dynamic_conf/conf.yml
+      - source: traefik_static_conf
+        target: /etc/traefik/traefik.yml
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${CERTS_PATH}:/certs/:ro"
+    networks:
+      - external_network
+
+networks:
+  external_network:
+    name: ${TRAEFIK_EXTERNAL_NETWORK}
+    external: true  
+
+configs:
+  traefik_dynamic_conf:
+    name: ${TRAEFIK_DYNAMIC_CONFIG_NAME}
+    external: true
+  traefik_static_conf:
+    name: ${TRAEFIK_STATIC_CONFIG_NAME}
+    external: true
