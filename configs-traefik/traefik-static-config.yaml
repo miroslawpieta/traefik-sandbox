@@ -1,0 +1,67 @@
+global:
+  checkNewVersion: true
+  # true by default
+  sendAnonymousUsage: false
+
+# (Optional) Log information
+log:
+  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: DEBUG
+  # common, json, logfmt
+  format: common
+  filePath: /var/log/traefik/traefik.log
+
+# (Optional) Accesslog
+accesslog:
+  # common, json, logfmt
+  format: common
+  filePath: /var/log/traefik/access.log
+
+# (Optional) Enable API and Dashboard
+api:
+  dashboard: true
+  # Don't do this in production!
+  insecure: true
+  debug: true
+
+# (Optional) Prometheus metrics
+#metrics:
+#  prometheus:
+#    buckets:
+#      - 0.1
+#      - 0.3
+#      - 1.2
+#      - 5.0
+#    addEntryPointsLabels: true
+#    addRoutersLabels: false
+#    addServicesLabels: true
+
+# Entry Points configuration
+entryPoints:
+  web:
+    address: :80
+    # (Optional) Redirect to HTTPS
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: :443
+  
+# (Optional) Disable TLS version 1.0 and 1.1
+#   options:
+#     default:
+#       minVersion: VersionTLS12
+
+providers:
+  docker:
+    # Default is true
+    exposedByDefault: true
+    swarmmode: true
+    network: public
+  file:
+    # watch for dynamic configuration changes
+    directory: /etc/traefik/dynamic_conf
+    watch: true
